@@ -1,0 +1,406 @@
+Menjalankan laravel di localhost
+- Pindahkan project laravel ke root folder localhostnya
+- buat file index.php dengan sintak berikut
+<?php
+
+header('Location: public/');
+?>
+-simpan file index.php di root folder project
+-atur permission folder
+-selesai
+
+Atau menggunakan file htaccess yang dibuat manual di root folder projectnya
+<IfModule mod_rewrite.c>
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -d [OR]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ ^$1 [N]
+
+RewriteCond %{REQUEST_URI} (\.\w+$) [NC]
+RewriteRule ^(.*)$ public/$1
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ server.php
+</IfModule>
+
+Link referensi https://stackoverflow.com/questions/24620505/laravel-htaccess
+
+-=-=-=-=-=-=-=-=-=-=
+SweetAlert laravel 
+Menggunakan variabel 
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script>
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+        })
+        @if(Session::has('message'))
+        var type = "{{Session::get('alert-type')}}";
+        switch (type) {
+            case 'info':
+                Toast.fire({
+                    type: 'info',
+                    title: "{{Session::get('message')}}"
+                })
+                break;
+                case 'success':
+                    Toast.fire({
+                    type: 'success',
+                    title: "{{Session::get('message')}}"
+                })
+                break;
+                case 'warning':
+                    Toast.fire({
+                    type: 'warning',
+                    title: "{{Session::get('message')}}"
+                })
+                break;  
+                case 'error':
+                    Toast.fire({
+                    type: 'error',
+                    title: "{{Session::get('message')}}"
+                })
+                break;
+                case 'dialog_error':
+                    Swal.fire({
+                    type: 'error',
+                    title: "Oppssss",
+                    text: "{{Session::get('message')}}",
+                    timer:3000
+                })
+                break;
+        }
+        @endif
+        @if ($errors->any())
+        @foreach($errors->all() as $error)
+        Swal.fire({
+            type: 'error',
+            title: "Oppsss",
+            text: "{{ $error }}",
+        });
+        @endforeach
+        @endif
+         
+        @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: "Oppsss",
+            text: "Terjadi suatu kesalahan",
+        })
+        @endif
+        $('#table-data').DataTable();
+        let baseurl = "<?=url('/')?>";
+        let fullURL = "<?=url()->full()?>";
+       
+        </script>
+
+cara penggunaan 
+        $notification = array(
+            'message' => 'Import data berhasil dilakukan',
+            'alert-type' => 'success'
+        );
+        return redirect()->route('admin.books')->with($notification);
+
+Menggunakan Session
+        <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if(session('status'))
+            Swal.fire({
+                title: 'Congratulations!',
+                text: "{{ session('status') }}",
+                icon: 'Success',
+                timer: 3000
+            })
+        @endif
+        @if($errors->any())
+            @php
+                $message = '';
+                foreach($errors->all() as $error)
+                {
+                    $message .= $error."<br/>";
+                }
+            @endphp
+            Swal.fire({
+                title: 'Error',
+                html: "{!! $message !!}",
+                icon: 'error',
+            })
+        @endif
+    </script>
+    cara penggunaan
+    use Session;
+Session::flash('status', 'Hapus data berhasil!!!');
+-=--=-=-=-=-=-=-=-=-=
+Delete Confirmation dengan SweetAlert
+  {!! Form::open(['url' => 'lecture/'.$lecture->nidn, 'method' => 'DELETE']) !!}
+                                        {{ Form::button('HAPUS', ['class' => 'btn btn-danger btn-sm', 'onclick' => "deleteConfirmation('".$lecture->nama."')"]) }}
+                                    {!! Form::close() !!}
+        function deleteConfirmation(nama)
+        {
+            var form = event.target.form;
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                html: "Anda akan menghapus data dengan nama <strong>"+nama+"</strong> dan tidak dapat mengembalikannya kembali",
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus saja!',
+            }). then((result) => {
+                if(result.value) {
+                    form.submit();
+                }
+            });
+        }
+
+        Route::delete('/{id}', [LectureController::class, 'destroy'])->name('destroy');
+        public function destroy($id)
+    {
+        Lecture::destroy($id);
+
+        Session::flash('status', 'Hapus data berhasil!!!');
+        return redirect()->back();
+    }
+
+  <form action="manage-user/delete/{{$value->id}}" method="post">
+                                    @csrf
+                                    @method('delete')
+                                    <button type="button" onclick="deleteUser()" id="delete-user" class="btn btn-danger">Hapus</button>
+                                </form>
+  function deleteUser(){
+            var form = event.target.form;
+            Swal.fire({
+                title: 'Apa kamu yakin?',
+                text: "Kamu Akan Menghapusnya!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+            })
+        }
+
+        Route::delete('/manage-user/delete/{id}', 'delete')->name('manage-user.delete');
+        public function delete($id)
+    {
+        $user = User::find($id);
+        $user->destroy();
+        Session::flash('status', 'Data User Berhasil Dihapus!!!');
+        return redirect()->back();
+    }
+
+Delete Menggunakan Ajax
+    <button type="button" class="btn btn-danger" onclick="deleteConfirmation('{{$book->id}}', '{{$book->judul}}')">Hapus</button>
+    public function delete_book($id){
+    $book = Book::find($id);
+    Storage::delete('public/cover_buku/' .$book->cover);
+    $book->delete();
+    $success = true;
+    $message = "Data buku berhasil dihapus";
+
+    return response()->json([
+        'success' => $success,
+        'message' => $message,
+    ]);
+}
+Route::post('admin/books/delete/{id}', [App\Http\Controllers\AdminController::class, 'delete_book'])->name('admin.book.delete')->middleware('is_admin');
+    function deleteConfirmation(npm, judul) {
+            swal.fire({
+                title: "Hapus?",
+                type: 'warning',
+                text: "Apakah anda yakin akan menghapus data buku dengan judul " + judul + "?!",
+                showCancelButton: !0,
+                confirmButtonText: "Ya, lakukan!",
+                cancelButtonText: "Tidak, batalkan!",
+                reverseButton: !0
+            }).then(function (e) {
+                if (e.value === true) {
+                    var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+                    $.ajax({
+                        type: 'POST',
+                        url: "books/delete/" + npm,
+                        data: {
+                            _token: CSRF_TOKEN
+                        },
+                        dataType: 'JSON',
+                        success: function (results) {
+                            if (results.success === true) {
+                                swal.fire("Done!", results.message, "success");
+                                setTimeout(function () {
+                                    location.reload();
+                                }, 1000);
+                            } else {
+                                swal.fire("Error!", results.message, "error");
+                            }
+                        }
+                    });
+                } else {
+                    e.dismiss;
+                }
+            }, function (dismiss) {
+                return false;
+            })
+        }
+
+
+
+public function hapus_gambar($id)
+    {
+        $gambar = Gambar::find($id);
+        $gambar->delete();
+        return response()->json($gambar);
+    }
+Route::delete('/books/gambar/delete/{id}', 'hapus_gambar')->name('hapus.gambar');
+    <div id="gambar-buku-`+x.id+`">       
+                                <button data-id="`+x.id +`" type="button" id="btn-delete-gambar" class="close text-danger" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button> 
+                                            <img id="" src="{{ asset('storage/gambar_buku/` + x
+                                .nama_file + `') }}" class="img-fluid" width="100%" height="50%"/>
+                                </div>
+    <script>
+        $(function(){
+            $(document).on('click', '#btn-delete-gambar', function(){
+                var id = $(this).data('id');
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
+            }
+        });
+                    Swal.fire({
+                            title: 'Apa kamu yakin?',
+                            text: "Kamu Akan Menghapus Gambar Ini!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Ya, hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.ajax({
+                                    url: "books/gambar/delete/" +id,
+                                    type: "DELETE",
+                                    success: function (response) {
+                                        Swal.fire('Berhasil Menghapus!', response.msg, 'success');
+                                        console.log(response);
+                                            $("#gambar-buku-"+id).remove();
+                                            //$('#table-data').load(document.URL +  ' #table-data').ajax.reload();;
+                                            // window.location.reload();
+                                    }
+                                });
+                            }
+                        })
+              });
+            });
+    </script>
+
+
+
+    -=-=-=-=-=-=-=-=-=-=-=
+    Send Data to Modal
+    <form method="post" action="{{ route('admin.book.update') }}" enctype="multipart/form-data">
+                        @csrf
+                        @method('PATCH')
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-judul">Judul Buku</label>
+                                    <input type="text" class="form-control" name="judul" id="edit-judul" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-penulis">Penulis</label>
+                                    <input type="text" class="form-control" name="penulis" id="edit-penulis" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-tahun">Tahun</label>
+                                    <input type="year" class="form-control" name="tahun" id="edit-tahun" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-penerbit">Penerbit</label>
+                                    <input type="text" class="form-control" name="penerbit" id="edit-penerbit"
+                                        required />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" id="image-area"></div>
+
+                                <div class="form-group">
+                                    <label for="edit-cover">Cover</label>
+                                    <input type="file" class="form-control" name="cover" id="edit-cover" />
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="id" id="edit-id"/>
+                    <input type="hidden" name="old-cover" id="edit-old-cover"/>
+
+                    <button type="button" class="btn btn-secondary" data-dissmiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-success">Update</button>
+                    </form>
+
+    <script>
+        $(function () {
+            $(document).on('click', '#btn-edit-buku', function () {
+                let id = $(this).data('id');
+                $('#image-area').empty();
+                $.ajax({
+                    type: "get",
+                    url: "{{url('/admin/ajaxadmin/dataBuku')}}/" + id,
+                    dataType: 'json',
+                    success: function (res) {
+                        $('#edit-judul').val(res.judul);
+                        $('#edit-penerbit').val(res.penerbit);
+                        $('#edit-penulis').val(res.penulis);
+                        $('#edit-tahun').val(res.tahun);
+                        $('#edit-id').val(res.id);
+                        $('#edit-old-cover').val(res.cover);
+                        if (res.cover !== null) {
+                            $('#image-area').append(
+                                "<img src='" + baseurl + "/storage/cover_buku/" + res
+                                .cover + "' width='200px' />"
+                            );
+                        } else {
+                            $('#image-area').append('[Gambar tidak tersedia]');
+                        }
+                    },
+                });
+            });
+        });
+public function getDataBuku($id) {
+    $buku = Book::find($id);
+    return response()->json($buku);
+}
+Route::get('admin/ajaxadmin/dataBuku/{id}', [App\Http\Controllers\AdminController::class, 'getDataBuku']);
+
+
+-=-=-=-=-=-=-=-=-=-=-=
+Print PDF
+Menggunakan Boostrap 4.6
+Route::get('admin/print_books', [App\Http\Controllers\AdminController::class, 'print_books'])->name('admin.print.books')->middleware('is_admin');
+
+use PDF;
+
+ public function print_books(){
+        $books = Book::all();
+        $pdf =PDF::loadview('print_books', ['books' => $books]);
+        return $pdf->download('data_buku.pdf');
+        }
+
+
+
